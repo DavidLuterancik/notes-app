@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+
 import { Category, CategorySelect } from './CategorySelect'
 import {
     Button,
@@ -9,16 +11,22 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
+import { NoteProps } from './Note'
+import { Close, Save } from '@mui/icons-material'
+import moment from 'moment'
 
 export interface NoteEditProps {
+    id?: string
     title?: string
     description?: string
     category?: Category
-    saveFunction: Function
-    discardFunction: Function
+    date?: string
+    saveFunction?: (note: NoteProps) => void
+    discardFunction?: () => void
 }
 
 export const NoteEdit: React.FC<NoteEditProps> = ({
+    id,
     title,
     description,
     category,
@@ -31,11 +39,12 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
     const [titleError, setTitleError] = useState(false)
     const [descriptionError, setDescriptionError] = useState(false)
 
-    const titleLimit = 10
-    const descriptionLimit = 200
+    const titleLimit = Number(process.env.REACT_APP_NOTE_TITLE_LIMIT) || 20
+    const descriptionLimit =
+        Number(process.env.REACT_APP_NOTE_DESCRIPTION_LIMIT) || 200
 
     function handleTitleChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const { name, value } = event.target
+        const { value } = event.target
 
         if (titleLimit - value.length >= 0) {
             setTitle(value)
@@ -46,12 +55,15 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
     function handleDescriptionChange(
         event: React.ChangeEvent<HTMLInputElement>
     ) {
-        const { name, value } = event.target
+        const { value } = event.target
 
         if (descriptionLimit - value.length >= 0) {
             setDescription(value)
-            setDescriptionError(value.trim() === '')
+        } else {
+            setDescription(value.slice(0, descriptionLimit))
         }
+
+        setDescriptionError(value.trim() === '')
     }
 
     function handleCategorySelect(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -90,6 +102,10 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                         error={titleError}
                     />
 
+                    <Typography fontSize={12} color="textSecondary">
+                        Characters left: {`${titleLimit - t.length}`}
+                    </Typography>
+
                     <TextField
                         id="description"
                         label="Description"
@@ -101,7 +117,7 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                         error={descriptionError}
                     />
 
-                    <Typography>
+                    <Typography fontSize={12} color="textSecondary">
                         Characters left: {`${descriptionLimit - d.length}`}
                     </Typography>
 
@@ -119,24 +135,27 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                     variant="contained"
                     onClick={() => {
                         if (validate()) {
-                            saveFunction({
-                                id: new Date(),
-                                title: t,
-                                description: d,
-                                category: c,
-                                date: new Date(),
-                            })
+                            saveFunction &&
+                                saveFunction({
+                                    id: id || uuidv4(),
+                                    title: t,
+                                    description: d,
+                                    category: c,
+                                    date: moment().toString(),
+                                })
                         }
                     }}
+                    endIcon={<Save />}
                 >
-                    Save note
+                    Save
                 </Button>
                 <Button
                     size="small"
-                    variant="contained"
-                    onClick={() => discardFunction()}
+                    variant="outlined"
+                    onClick={() => discardFunction && discardFunction()}
+                    endIcon={<Close />}
                 >
-                    Discard changes
+                    Close
                 </Button>
             </CardActions>
         </Card>

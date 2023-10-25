@@ -1,13 +1,13 @@
 import { FormControl, InputLabel, MenuItem, Select } from '@mui/material'
 import React from 'react'
 
-export const categoryAll = 'all'
+export const categoryAll = 'All'
 
 export enum Category {
-    New = 'new',
-    InProgress = 'inProgress',
-    Completed = 'completed',
-    Archived = 'archived',
+    New = 'New',
+    InProgress = 'In progress',
+    Completed = 'Completed',
+    Archived = 'Archived',
 }
 
 export interface CategorySelectProps {
@@ -33,7 +33,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             >
                 {all && <MenuItem value={categoryAll}>{categoryAll}</MenuItem>}
                 {Object.values(Category).map((category) => (
-                    <MenuItem value={category}>{category}</MenuItem>
+                    <MenuItem key={category} value={category}>
+                        {category}
+                    </MenuItem>
                 ))}
             </Select>
         </FormControl>
