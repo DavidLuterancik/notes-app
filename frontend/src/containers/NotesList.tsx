@@ -7,7 +7,6 @@ import {
 } from '../components/CategorySelect'
 import { Note, NoteProps } from '../components/Note'
 import { NoteEdit } from '../components/AddNote'
-import { v4 as uuidv4 } from 'uuid'
 
 import {
     Box,
@@ -24,9 +23,6 @@ import {
     Alert,
     CircularProgress,
     Fade,
-    Card,
-    CardContent,
-    Skeleton,
 } from '@mui/material'
 import axios from 'axios'
 import { Add } from '@mui/icons-material'
