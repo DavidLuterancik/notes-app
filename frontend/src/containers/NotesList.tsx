@@ -20,9 +20,6 @@ import {
     TextField,
     Typography,
     Grid,
-    Alert,
-    CircularProgress,
-    Fade,
 } from '@mui/material'
 import axios from 'axios'
 import { Add } from '@mui/icons-material'
@@ -34,34 +31,11 @@ import {
     setReduxFilter,
     setReduxNotes,
 } from '../store/features/notesSlice'
+import AlertComponent, { AlertEnum, AlertItem } from '../components/Alert'
 
 export enum Sorter {
     Newest = 'Newest',
     Oldest = 'Oldest',
-}
-
-export const AlertEnum: Record<string, AlertItem> = {
-    error: {
-        severity: 'error',
-        text: 'Oops, something went wrong',
-        duration: 8000,
-    },
-    success: {
-        severity: 'success',
-        text: 'Successfully saved',
-        duration: 4000,
-    },
-    info: {
-        severity: 'info',
-        text: 'Note deleted',
-        duration: 4000,
-    },
-}
-
-type AlertItem = {
-    severity: any
-    text: string
-    duration: number
 }
 
 const NotesList = () => {
@@ -77,7 +51,6 @@ const NotesList = () => {
         filter.search
     )
 
-    const [loading, setLoading] = useState(false)
     const [alert, setAlert] = useState<AlertItem>()
     const [showAlert, setShowAlert] = useState(false)
 
@@ -89,14 +62,11 @@ const NotesList = () => {
     }, [search])
 
     useEffect(() => {
-        setLoading(true)
-
         const fetchData = async () => {
             try {
                 const response = await axios.get(
                     `${process.env.REACT_APP_API_URL}/?${buildQuery()}`
                 )
-                setLoading(false)
                 dispatch(setReduxNotes(response.data))
             } catch (error) {
                 console.error('Error fetching data:', error)
@@ -221,18 +191,10 @@ const NotesList = () => {
             setShowAlert(false)
         }, alert.duration)
     }
+
     return (
         <Box p={{ xs: 1, md: 2 }}>
-            <Box sx={{ position: 'absolute', right: 16 }}>
-                <Fade in={loading}>
-                    <CircularProgress />
-                </Fade>
-            </Box>
-            <Box sx={{ position: 'absolute' }}>
-                <Fade in={showAlert}>
-                    <Alert severity={alert?.severity}>{alert?.text}</Alert>
-                </Fade>
-            </Box>
+            <AlertComponent showAlert={showAlert} alert={alert as AlertItem} />
 
             <Container maxWidth="sm">
                 <Typography variant="h2" color="textPrimary" textAlign="center">
@@ -261,7 +223,7 @@ const NotesList = () => {
                         setSearch(event.target.value)
                     }}
                     fullWidth
-                    style={{
+                    sx={{
                         background: 'white',
                     }}
                 />
@@ -288,7 +250,7 @@ const NotesList = () => {
                             onChange={(e) =>
                                 handleChangeSorter(e.target.value as Sorter)
                             }
-                            style={{
+                            sx={{
                                 background: 'white',
                             }}
                         >
@@ -353,7 +315,7 @@ const NotesList = () => {
                             onClick={() => handleSelectEdit('add')}
                             endIcon={<Add />}
                             fullWidth
-                            sx={{height: '100%', minHeight: '300px'}}
+                            sx={{ height: '100%', minHeight: '300px' }}
                         >
                             Add note
                         </Button>

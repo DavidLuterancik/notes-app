@@ -41,7 +41,7 @@ export const Note: React.FC<NoteProps> = (props) => {
             case Category.Archived:
                 return colors.grey[300]
             default:
-                return ''
+                return colors.grey[50]
         }
     }
 
