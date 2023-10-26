@@ -145,31 +145,6 @@ const NotesList = () => {
         setCategory(value as Category)
     }
 
-    // Frontend filtering
-
-    // function getSearchFilter(note: NoteProps) {
-    //     return (
-    //         note.title?.toLowerCase().includes(search.toLowerCase()) ||
-    //         note.description?.toLowerCase().includes(search.toLowerCase())
-    //     )
-    // }
-
-    // function getCategoryFilter(note: NoteProps) {
-    //     if (category === categoryAll) return true
-    //     return note.category === category
-    // }
-
-    // function getSorter(a: NoteProps, b: NoteProps) {
-    //     return sorter === Sorter.Newest
-    //         ? moment(b.date).diff(a.date)
-    //         : moment(a.date).diff(b.date)
-    // }
-
-    // const sortedNotes = notes
-    //     .filter((note) => getSearchFilter(note))
-    //     .filter((note) => getCategoryFilter(note))
-    //     .sort((a, b) => getSorter(a, b))
-
     async function handleSaveNote(note: NoteProps) {
         const noteIndex = notes.findIndex((n) => n.id === note.id)
 
