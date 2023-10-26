@@ -14,7 +14,6 @@ import {
 import { NoteProps } from './Note'
 import { Close, Save } from '@mui/icons-material'
 import moment from 'moment'
-
 export interface NoteEditProps {
     id?: string
     title?: string
@@ -89,9 +88,9 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
     }
 
     return (
-        <Card>
+        <Card variant="outlined" sx={{ height: '100%' }}>
             <CardContent>
-                <Stack direction="column" spacing={2} justifyContent="center">
+                <Stack direction="column" spacing={1} justifyContent="center">
                     <TextField
                         id="title"
                         label="Title"
@@ -100,9 +99,10 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                         onChange={handleTitleChange}
                         required
                         error={titleError}
+                        size={'small'}
                     />
 
-                    <Typography fontSize={12} color="textSecondary">
+                    <Typography fontSize={12} color="textSecondary" pb={2}>
                         Characters left: {`${titleLimit - t.length}`}
                     </Typography>
 
@@ -115,9 +115,10 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                         onChange={handleDescriptionChange}
                         required
                         error={descriptionError}
+                        size={'small'}
                     />
 
-                    <Typography fontSize={12} color="textSecondary">
+                    <Typography fontSize={12} color="textSecondary" pb={2}>
                         Characters left: {`${descriptionLimit - d.length}`}
                     </Typography>
 
@@ -141,7 +142,7 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                                     title: t,
                                     description: d,
                                     category: c,
-                                    date: moment().toString(),
+                                    date: moment().toISOString(),
                                 })
                         }
                     }}

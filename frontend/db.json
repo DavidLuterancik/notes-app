@@ -4,8 +4,8 @@
       "id": "82474880-d62c-4e44-af66-93b9cbd4030b",
       "title": "Poznámka 1",
       "description": "Popis",
-      "category": "New",
-      "date": "Wed Oct 25 2023 21:49:18 GMT+0200"
+      "category": "Archived",
+      "date": "2023-10-26T16:42:39.686Z"
     },
     {
       "id": "59ca6508-2b46-4517-aca4-ed51906b30ef",
@@ -26,7 +26,7 @@
       "title": "Lorem ipsum",
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus et mi tincidunt, egestas dolor nec, ultrices neque. Nam vel viverra arcu, a feugiat felis. Curabitur sodales nisl ac libero aliquet l",
       "category": "In progress",
-      "date": "2023-10-25T17:30:18.251Z"
+      "date": "2023-10-26T16:40:56.760Z"
     }
   ]
 }

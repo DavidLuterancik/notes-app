@@ -30,6 +30,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 value={selectedCategory}
                 label="Age"
                 onChange={(e) => selectFunction(e)}
+                style={{
+                    background: 'white'
+                }}
             >
                 {all && <MenuItem value={categoryAll}>{categoryAll}</MenuItem>}
                 {Object.values(Category).map((category) => (

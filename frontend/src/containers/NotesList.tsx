@@ -7,52 +7,83 @@ import {
 } from '../components/CategorySelect'
 import { Note, NoteProps } from '../components/Note'
 import { NoteEdit } from '../components/AddNote'
+import { v4 as uuidv4 } from 'uuid'
 
 import {
     Box,
     Button,
-    Card,
-    CardContent,
     Container,
     FormControl,
-    FormControlLabel,
-    FormGroup,
-    Grid,
     InputLabel,
     MenuItem,
     Select,
     Stack,
-    Switch,
     TextField,
     Typography,
+    Grid,
+    Alert,
+    CircularProgress,
+    Fade,
+    Card,
+    CardContent,
+    Skeleton,
 } from '@mui/material'
 import axios from 'axios'
 import { Add } from '@mui/icons-material'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
     addReduxNote,
+    editReduxNote,
     removeReduxNote,
+    setReduxFilter,
     setReduxNotes,
 } from '../store/features/notesSlice'
-import moment from 'moment'
-import { v4 as uuidv4 } from 'uuid'
 
 export enum Sorter {
     Newest = 'Newest',
     Oldest = 'Oldest',
 }
 
+export const AlertEnum: Record<string, AlertItem> = {
+    error: {
+        severity: 'error',
+        text: 'Oops, something went wrong',
+        duration: 8000,
+    },
+    success: {
+        severity: 'success',
+        text: 'Successfully saved',
+        duration: 4000,
+    },
+    info: {
+        severity: 'info',
+        text: 'Note deleted',
+        duration: 4000,
+    },
+}
+
+type AlertItem = {
+    severity: any
+    text: string
+    duration: number
+}
+
 const NotesList = () => {
-    const [notes, setNotes] = useState<NoteProps[]>([])
-    const [sorter, setSorter] = useState<Sorter>(Sorter.Newest)
-    const [category, setCategory] = useState<string>(categoryAll)
     const [search, setSearch] = useState<string>('')
-    const [debouncedSearch, setDebouncedSearch] = useState<string>('')
     const [editId, setEditId] = useState<string | null>(null)
 
     const dispatch = useAppDispatch()
-    const reduxNotes = useAppSelector((state) => state.notes)
-    const [reduxToggle, setReduxToggle] = useState(false)
+    const { notes, filter } = useAppSelector((state) => state.notes)
+
+    const [sorter, setSorter] = useState<Sorter>(filter.sorter as Sorter)
+    const [category, setCategory] = useState<string>(filter.category)
+    const [debouncedSearch, setDebouncedSearch] = useState<string>(
+        filter.search
+    )
+
+    const [loading, setLoading] = useState(false)
+    const [alert, setAlert] = useState<AlertItem>()
+    const [showAlert, setShowAlert] = useState(false)
 
     useEffect(() => {
         const delayInputTimeoutId = setTimeout(() => {
@@ -62,15 +93,18 @@ const NotesList = () => {
     }, [search])
 
     useEffect(() => {
+        setLoading(true)
+
         const fetchData = async () => {
             try {
                 const response = await axios.get(
                     `${process.env.REACT_APP_API_URL}/?${buildQuery()}`
                 )
-                setNotes(response.data)
+                setLoading(false)
                 dispatch(setReduxNotes(response.data))
             } catch (error) {
                 console.error('Error fetching data:', error)
+                handleShowAlert(AlertEnum.error)
             }
         }
 
@@ -89,6 +123,14 @@ const NotesList = () => {
             searchParams.append(
                 '_order',
                 sorter === Sorter.Newest ? 'desc' : 'asc'
+            )
+
+            dispatch(
+                setReduxFilter({
+                    search: debouncedSearch,
+                    category,
+                    sorter,
+                })
             )
 
             return searchParams.toString()
@@ -133,12 +175,12 @@ const NotesList = () => {
     //     .sort((a, b) => getSorter(a, b))
 
     async function handleSaveNote(note: NoteProps) {
-        const existingNoteIndex = notes.findIndex((n) => n.id === note.id)
+        const noteIndex = notes.findIndex((n) => n.id === note.id)
 
-        if (existingNoteIndex === -1) {
+        if (noteIndex === -1) {
             await postNote(note)
         } else {
-            await putNote(existingNoteIndex, note)
+            await putNote(noteIndex, note)
         }
     }
 
@@ -148,26 +190,29 @@ const NotesList = () => {
                 `${process.env.REACT_APP_API_URL}`,
                 note
             )
-            setNotes([...notes, newNote])
+
             setEditId(null)
-        } catch (e) {
-            console.error(e)
+            dispatch(addReduxNote(newNote))
+            handleShowAlert(AlertEnum.success)
+        } catch (error) {
+            console.error('Error post note:', error)
+            handleShowAlert(AlertEnum.error)
         }
     }
 
-    async function putNote(existingNoteIndex: number, note: NoteProps) {
+    async function putNote(noteIndex: number, note: NoteProps) {
         try {
             const { data: updatedNote } = await axios.put(
                 `${process.env.REACT_APP_API_URL}/${note.id}`,
                 note
             )
 
-            const updatedNotes = [...notes]
-            updatedNotes[existingNoteIndex] = updatedNote
-            setNotes(updatedNotes)
             setEditId(null)
-        } catch (e) {
-            console.error(e)
+            dispatch(editReduxNote({ noteIndex, note: updatedNote }))
+            handleShowAlert(AlertEnum.success)
+        } catch (error) {
+            console.error('Error put note:', error)
+            handleShowAlert(AlertEnum.error)
         }
     }
 
@@ -179,10 +224,12 @@ const NotesList = () => {
                 )
 
                 if (status === 200) {
-                    setNotes(notes.filter((n) => n.id !== note.id))
+                    handleShowAlert(AlertEnum.info)
+                    dispatch(removeReduxNote(note.id))
                 }
-            } catch (e) {
-                console.error(e)
+            } catch (error) {
+                console.error('Error fetching data:', error)
+                handleShowAlert(AlertEnum.error)
             }
         }
     }
@@ -195,97 +242,39 @@ const NotesList = () => {
         setEditId(null)
     }
 
-    function renderReduxToggle() {
-        return (
-            <FormGroup>
-                <FormControlLabel
-                    control={<Switch checked={reduxToggle} />}
-                    label="Redux state demo"
-                    onChange={() => {
-                        setReduxToggle(!reduxToggle)
-                    }}
-                />
-            </FormGroup>
-        )
+    function handleShowAlert(alert: AlertItem) {
+        setAlert(alert)
+        setShowAlert(true)
+
+        setTimeout(() => {
+            setShowAlert(false)
+        }, alert.duration)
     }
-
-    if (reduxToggle) {
-        return (
-            <Box>
-                <Container maxWidth="lg">
-                    {reduxNotes.notes.map((n) => (
-                        <Note
-                            key={n.id}
-                            {...n}
-                            deleteFunction={(note) => {
-                                dispatch(removeReduxNote(note.id))
-                            }}
-                        />
-                    ))}
-
-                    <Button
-                        variant="contained"
-                        size="large"
-                        endIcon={<Add />}
-                        onClick={() =>
-                            dispatch(
-                                addReduxNote({
-                                    id: uuidv4(),
-                                    title: 'test',
-                                    description: 'test',
-                                    category: 'new',
-                                    date: moment().toString(),
-                                })
-                            )
-                        }
-                    >
-                        Add to store
-                    </Button>
-
-                    {renderReduxToggle()}
-                </Container>
-            </Box>
-        )
-    }
-
-    function renderAddNote() {
-        return (
-            <Grid item key={'add'} xs={12} sm={6} md={4} lg={3}>
-                {editId === 'add' ? (
-                    <NoteEdit
-                        saveFunction={(note: NoteProps) => handleSaveNote(note)}
-                        discardFunction={() => handleDiscardEdit()}
-                    />
-                ) : (
-                    <Card>
-                        <CardContent>
-                            <Button
-                                variant="contained"
-                                size="large"
-                                onClick={() => handleSelectEdit('add')}
-                                endIcon={<Add />}
-                            >
-                                Add note
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
-            </Grid>
-        )
-    }
-
     return (
-        <Box>
-            <Container maxWidth="lg">
-                <Typography variant="h1" color="textPrimary" textAlign="center">
+        <Box p={{ xs: 1, md: 2 }}>
+            <Box sx={{ position: 'absolute', right: 16 }}>
+                <Fade in={loading}>
+                    <CircularProgress />
+                </Fade>
+            </Box>
+            <Box sx={{ position: 'absolute' }}>
+                <Fade in={showAlert}>
+                    <Alert severity={alert?.severity}>{alert?.text}</Alert>
+                </Fade>
+            </Box>
+
+            <Container maxWidth="sm">
+                <Typography variant="h2" color="textPrimary" textAlign="center">
                     Notes
                 </Typography>
 
                 <Typography
-                    variant="h6"
+                    fontSize={16}
                     color="textSecondary"
-                    textAlign="center"
+                    textAlign="justify"
                     paragraph
+                    lineHeight={1.5}
+                    pb={2}
                 >
                     Find notes quickly with the dynamic search feature and
                     maintain brevity with a character limit. Filter them on
@@ -301,10 +290,13 @@ const NotesList = () => {
                         setSearch(event.target.value)
                     }}
                     fullWidth
+                    style={{
+                        background: 'white',
+                    }}
                 />
 
                 <Stack
-                    sx={{ pt: 4 }}
+                    sx={{ py: 4 }}
                     direction="row"
                     spacing={2}
                     justifyContent="center"
@@ -325,6 +317,9 @@ const NotesList = () => {
                             onChange={(e) =>
                                 handleChangeSorter(e.target.value as Sorter)
                             }
+                            style={{
+                                background: 'white',
+                            }}
                         >
                             {Object.values(Sorter).map((sorter) => (
                                 <MenuItem key={sorter} value={sorter}>
@@ -337,44 +332,65 @@ const NotesList = () => {
             </Container>
 
             <Container maxWidth="lg">
-                <Grid
-                    container
-                    spacing={2}
-                    justifyContent="flex-start"
-                    padding={'20px 0'}
-                >
-                    {notes.map((note) => (
-                        <Grid item key={note.id} xs={12} sm={6} md={4} lg={3}>
-                            {editId === note.id ? (
-                                <NoteEdit
-                                    {...note}
-                                    category={note.category as Category}
-                                    saveFunction={(note: NoteProps) =>
-                                        handleSaveNote(note)
-                                    }
-                                    discardFunction={() => handleDiscardEdit()}
-                                />
-                            ) : (
-                                <Note
-                                    {...note}
-                                    selectEditFunction={(note: NoteProps) =>
-                                        handleSelectEdit(note.id)
-                                    }
-                                    deleteFunction={(note: NoteProps) =>
-                                        handleDeleteNote(note)
-                                    }
-                                />
-                            )}
-                        </Grid>
-                    ))}
-
-                    {renderAddNote()}
+                <Grid container spacing={2}>
+                    {renderNotes()}
                 </Grid>
-
-                {renderReduxToggle()}
             </Container>
         </Box>
     )
+
+    function renderNotes() {
+        return (
+            <>
+                {notes.map((note) => (
+                    <Grid item key={note.id} xs={12} sm={6} md={4} lg={3}>
+                        {editId === note.id ? (
+                            <NoteEdit
+                                {...note}
+                                category={note.category as Category}
+                                saveFunction={(note: NoteProps) =>
+                                    handleSaveNote(note)
+                                }
+                                discardFunction={() => handleDiscardEdit()}
+                            />
+                        ) : (
+                            <Note
+                                {...note}
+                                selectEditFunction={(note: NoteProps) =>
+                                    handleSelectEdit(note.id)
+                                }
+                                deleteFunction={(note: NoteProps) =>
+                                    handleDeleteNote(note)
+                                }
+                            />
+                        )}
+                    </Grid>
+                ))}
+
+                <Grid item key={'add'} xs={12} sm={6} md={4} lg={3}>
+                    {editId === 'add' ? (
+                        <NoteEdit
+                            saveFunction={(note: NoteProps) =>
+                                handleSaveNote(note)
+                            }
+                            discardFunction={() => handleDiscardEdit()}
+                        />
+                    ) : (
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() => handleSelectEdit('add')}
+                            endIcon={<Add />}
+                            fullWidth
+                            sx={{height: '100%', minHeight: '300px'}}
+                        >
+                            Add note
+                        </Button>
+                    )}
+                </Grid>
+            </>
+        )
+    }
 }
 
 export default NotesList
