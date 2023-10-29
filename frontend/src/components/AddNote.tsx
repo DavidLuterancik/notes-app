@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 
 import { Category, CategorySelect } from './CategorySelect'
 import {
@@ -14,8 +13,8 @@ import {
 import { NoteProps } from './Note'
 import { Close, Save } from '@mui/icons-material'
 import moment from 'moment'
-export interface NoteEditProps {
-    id?: string
+interface NoteEditProps {
+    id: string | null
     title?: string
     description?: string
     category?: Category
@@ -138,7 +137,7 @@ export const NoteEdit: React.FC<NoteEditProps> = ({
                         if (validate()) {
                             saveFunction &&
                                 saveFunction({
-                                    id: id || uuidv4(),
+                                    id,
                                     title: t,
                                     description: d,
                                     category: c,

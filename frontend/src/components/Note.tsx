@@ -4,6 +4,7 @@ import {
     Card,
     CardActions,
     CardContent,
+    Skeleton,
     Stack,
     Typography,
     colors,
@@ -13,7 +14,7 @@ import React from 'react'
 import { Category } from './CategorySelect'
 
 export interface NoteProps {
-    id: string
+    id: string | null
     title: string
     description: string
     category: string
@@ -100,3 +101,45 @@ export const Note: React.FC<NoteProps> = (props) => {
         </Card>
     )
 }
+
+export const NoteSkeleton = () => {
+    return (
+        <Card variant="outlined">
+            <CardContent>
+                <Stack direction="column" spacing={2} justifyContent="center">
+                    <Typography variant="h5" fontWeight={'bold'}>
+                        <Skeleton />
+                    </Typography>
+
+                    <Typography fontSize={14}>
+                        <Skeleton />
+                    </Typography>
+
+                    <Stack
+                        direction="row"
+                        spacing={2}
+                        justifyContent="space-between"
+                    >
+                        <Skeleton width={'25%'} />
+                        <Skeleton width={'25%'} />
+                    </Stack>
+                </Stack>
+            </CardContent>
+            <CardActions>
+                <Button size="small" variant="outlined" endIcon={<Edit />}>
+                    Edit
+                </Button>
+                <Button
+                    size="small"
+                    variant="contained"
+                    endIcon={<Delete />}
+                    color="error"
+                >
+                    Delete
+                </Button>
+            </CardActions>
+        </Card>
+    )
+}
+
+export default NoteSkeleton

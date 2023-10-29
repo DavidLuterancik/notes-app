@@ -5,12 +5,9 @@ import {
     CategorySelect,
     categoryAll,
 } from '../components/CategorySelect'
-import { Note, NoteProps } from '../components/Note'
-import { NoteEdit } from '../components/AddNote'
-
+import { NoteProps } from '../components/Note'
 import {
     Box,
-    Button,
     Container,
     FormControl,
     InputLabel,
@@ -22,7 +19,6 @@ import {
     Grid,
 } from '@mui/material'
 import axios from 'axios'
-import { Add } from '@mui/icons-material'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
     addReduxNote,
@@ -32,6 +28,7 @@ import {
     setReduxNotes,
 } from '../store/features/notesSlice'
 import AlertComponent, { AlertEnum, AlertItem } from '../components/Alert'
+import Notes from '../components/Notes'
 
 export enum Sorter {
     Newest = 'Newest',
@@ -52,7 +49,7 @@ const NotesList = () => {
     )
 
     const [alert, setAlert] = useState<AlertItem>()
-    const [showAlert, setShowAlert] = useState(false)
+    const [, setShowAlert] = useState(false)
 
     useEffect(() => {
         const delayInputTimeoutId = setTimeout(() => {
@@ -65,7 +62,7 @@ const NotesList = () => {
         const fetchData = async () => {
             try {
                 const response = await axios.get(
-                    `${process.env.REACT_APP_API_URL}/?${buildQuery()}`
+                    `${process.env.REACT_APP_API_URL}/notes?${buildQuery()}`
                 )
                 dispatch(setReduxNotes(response.data))
             } catch (error) {
@@ -128,7 +125,7 @@ const NotesList = () => {
     async function postNote(note: NoteProps) {
         try {
             const { data: newNote } = await axios.post(
-                `${process.env.REACT_APP_API_URL}`,
+                `${process.env.REACT_APP_API_URL}/notes`,
                 note
             )
 
@@ -144,7 +141,7 @@ const NotesList = () => {
     async function putNote(noteIndex: number, note: NoteProps) {
         try {
             const { data: updatedNote } = await axios.put(
-                `${process.env.REACT_APP_API_URL}/${note.id}`,
+                `${process.env.REACT_APP_API_URL}/notes/${note.id}`,
                 note
             )
 
@@ -161,12 +158,12 @@ const NotesList = () => {
         if (window.confirm(`Delete note ${note.title}?`)) {
             try {
                 const { status } = await axios.delete(
-                    `${process.env.REACT_APP_API_URL}/${note.id}`
+                    `${process.env.REACT_APP_API_URL}/notes/${note.id}`
                 )
 
                 if (status === 200) {
                     handleShowAlert(AlertEnum.info)
-                    dispatch(removeReduxNote(note.id))
+                    note.id && dispatch(removeReduxNote(note.id))
                 }
             } catch (error) {
                 console.error('Error fetching data:', error)
@@ -175,12 +172,8 @@ const NotesList = () => {
         }
     }
 
-    function handleSelectEdit(id: string) {
+    function handleSelectEdit(id: string | null) {
         setEditId(id)
-    }
-
-    function handleDiscardEdit() {
-        setEditId(null)
     }
 
     function handleShowAlert(alert: AlertItem) {
@@ -194,14 +187,14 @@ const NotesList = () => {
 
     return (
         <Box p={{ xs: 1, md: 2 }}>
-            <AlertComponent showAlert={showAlert} alert={alert as AlertItem} />
+            <AlertComponent alert={alert as AlertItem} />
 
             <Container maxWidth="sm">
-                <Typography variant="h2" color="textPrimary" textAlign="center">
-                    Notes
+            <Typography variant="h5" color="textPrimary" textAlign="center" gutterBottom>
+                    Notes - Redux + Axios
                 </Typography>
 
-                <Typography
+                {/* <Typography
                     fontSize={16}
                     color="textSecondary"
                     textAlign="justify"
@@ -213,7 +206,7 @@ const NotesList = () => {
                     maintain brevity with a character limit. Filter them on
                     need. A versatile solution for efficient digital note
                     management. Keep focus on clean and maintainable code.
-                </Typography>
+                </Typography> */}
 
                 <TextField
                     id="search"
@@ -266,64 +259,19 @@ const NotesList = () => {
 
             <Container maxWidth="lg">
                 <Grid container spacing={2}>
-                    {renderNotes()}
+                    <Notes
+                        notes={notes}
+                        error={false}
+                        isFetching={false}
+                        editId={editId}
+                        handleSelectEdit={handleSelectEdit}
+                        handleDeleteNote={handleDeleteNote}
+                        handleSaveNote={handleSaveNote}
+                    />
                 </Grid>
             </Container>
         </Box>
     )
-
-    function renderNotes() {
-        return (
-            <>
-                {notes.map((note) => (
-                    <Grid item key={note.id} xs={12} sm={6} md={4} lg={3}>
-                        {editId === note.id ? (
-                            <NoteEdit
-                                {...note}
-                                category={note.category as Category}
-                                saveFunction={(note: NoteProps) =>
-                                    handleSaveNote(note)
-                                }
-                                discardFunction={() => handleDiscardEdit()}
-                            />
-                        ) : (
-                            <Note
-                                {...note}
-                                selectEditFunction={(note: NoteProps) =>
-                                    handleSelectEdit(note.id)
-                                }
-                                deleteFunction={(note: NoteProps) =>
-                                    handleDeleteNote(note)
-                                }
-                            />
-                        )}
-                    </Grid>
-                ))}
-
-                <Grid item key={'add'} xs={12} sm={6} md={4} lg={3}>
-                    {editId === 'add' ? (
-                        <NoteEdit
-                            saveFunction={(note: NoteProps) =>
-                                handleSaveNote(note)
-                            }
-                            discardFunction={() => handleDiscardEdit()}
-                        />
-                    ) : (
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={() => handleSelectEdit('add')}
-                            endIcon={<Add />}
-                            fullWidth
-                            sx={{ height: '100%', minHeight: '300px' }}
-                        >
-                            Add note
-                        </Button>
-                    )}
-                </Grid>
-            </>
-        )
-    }
 }
 
 export default NotesList

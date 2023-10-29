@@ -1,5 +1,6 @@
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
-import NotesList from './containers/NotesList'
+import NotesListRTK from './containers/NotesListRTK'
+
 import { Provider } from 'react-redux'
 import { store } from './store'
 import '@fontsource/roboto/300.css'
@@ -29,7 +30,8 @@ function App() {
         <ThemeProvider theme={theme}>
             <Provider store={store}>
                 <CssBaseline>
-                    <NotesList />
+                    {/* <NotesList /> */}
+                    <NotesListRTK/>
                 </CssBaseline>
             </Provider>
         </ThemeProvider>
