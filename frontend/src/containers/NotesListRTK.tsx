@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {
-    useDeleteNoteMutation,
-    useGetNotesQuery,
-    usePostNoteMutation,
-    usePutNoteMutation,
-} from '../store/services/notes'
+
 import { NoteProps } from '../components/Note'
 import {
     Box,
@@ -26,6 +21,12 @@ import {
 import AlertComponent, { AlertEnum, AlertItem } from '../components/Alert'
 import { Sorter } from './NotesList'
 import Notes from '../components/Notes'
+import {
+    useDeleteNoteMutation,
+    useGetNotesQuery,
+    usePostNoteMutation,
+    usePutNoteMutation,
+} from '../store/services/notes'
 
 type editId = string | null
 
